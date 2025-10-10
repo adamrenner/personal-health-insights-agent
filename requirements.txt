@@ -1,4 +1,4 @@
-pandas==2.1
+pandas
 numpy==1.26
 matplotlib
 scipy==1.13.0
@@ -16,3 +16,4 @@ nbformat
 tavily-python
 ipywidgets
 ipykernel
+jupyter
