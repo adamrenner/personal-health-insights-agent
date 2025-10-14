@@ -7,3 +7,6 @@ __pycache__/
 # Jython bytecode files
 *$py.class
 /.venv/
+
+# Environment variables
+.env

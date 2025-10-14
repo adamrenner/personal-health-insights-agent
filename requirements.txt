@@ -17,3 +17,4 @@ tavily-python
 ipywidgets
 ipykernel
 jupyter
+python-dotenv
