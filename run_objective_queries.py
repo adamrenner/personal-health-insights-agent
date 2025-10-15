@@ -35,10 +35,10 @@ START_QUERY_INDEX = 3101  # Starting index of queries to run (0-based)
 END_QUERY_INDEX = 3102    # Ending index of queries to run (exclusive, set to None to run to end)
 USER_IDS = [465, 171, 333, 41]
 
-# 465 - healthy behavior
-# 171 - inactive insomniacs
-# 333 - sedentary sleeper
-# 41 - active archiver
+# 465 - healthy behavior - data/auto_eval/health_behavior_final_v2.csv
+# 171 - inactive insomniacs - data/auto_eval/inactive_insomniacs_final_v2.csv
+# 333 - sedentary sleeper - data/auto_eval/sedentary_sleeper_final_v2.csv
+# 41 - active archiver - data/auto_eval/active_achiver_final_v2.csv
 
 
 
