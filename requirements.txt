@@ -18,3 +18,4 @@ ipywidgets
 ipykernel
 jupyter
 python-dotenv
+openpyxl
