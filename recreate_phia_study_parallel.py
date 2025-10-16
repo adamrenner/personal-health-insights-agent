@@ -91,6 +91,101 @@ def load_and_prepare_data(user_ids, question_range):
     return user_questions
 
 
+def run_with_retry(agent, full_question, item, user_id):
+    """
+    Run the agent with retry logic for 429 errors in both exceptions and results.
+
+    Args:
+        agent: The agent to run
+        full_question: The full question string
+        item: Dict with question details
+        user_id: The user ID
+
+    Returns:
+        dict: Result dictionary
+    """
+    max_retries = 5
+    question = item['question']
+
+    for attempt in range(max_retries + 1):
+        try:
+            final_answer, final_state = ot.run(
+                agent(inputs=full_question, return_final_state=True)
+            )
+            # Check for 429 error indicators in the result
+            fa_str = str(final_answer)
+            fs_str = str(final_state)
+            if ("429" in fa_str or "429" in fs_str or
+                "quota exceeded" in fa_str.lower() or "quota exceeded" in fs_str.lower()):
+                if attempt < max_retries:
+                    # Retry with delay
+                    retry_delay = 15.0
+                    sleep_time = retry_delay + 3 + attempt * 10
+                    print(f"quota exceeded on query {item['question_index']}, retry in {sleep_time} seconds")
+                    print(f"Retrying attempt {attempt + 1} for query {item['question_index']}")
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    print(f"Retry failed after {max_retries} retries for query {item['question_index']}")
+                    return {
+                        'user_id': user_id,
+                        'question': question,
+                        'correct_answer': item['answer'],
+                        'model_answer': f"Error: 429 in result after {max_retries} retries",
+                        'reasoning_steps': "",
+                        'question_index': item['question_index']
+                    }
+            else:
+                if attempt > 0:
+                    print(f"Retry succeeded for query {item['question_index']}")
+                return {
+                    'user_id': user_id,
+                    'question': question,
+                    'correct_answer': item['answer'],
+                    'model_answer': final_answer,
+                    'reasoning_steps': str(final_state),
+                    'question_index': item['question_index']
+                }
+        except Exception as e:
+            error_msg = str(e)
+            if "429" in error_msg or "quota exceeded" in error_msg.lower():
+                if attempt < max_retries:
+                    # Extract retry delay from error message
+                    match = re.search(r"retry in (\d+\.?\d*)s", error_msg)
+                    if match:
+                        retry_delay = float(match.group(1))
+                    else:
+                        match = re.search(r"retry_delay \{ seconds: (\d+) \}", error_msg)
+                        if match:
+                            retry_delay = float(match.group(1))
+                        else:
+                            retry_delay = 15.0
+                    sleep_time = retry_delay + 3 + attempt * 10
+                    print(f"quota exceeded on query {item['question_index']}, retry in {sleep_time} seconds")
+                    print(f"Retrying attempt {attempt + 1} for query {item['question_index']}")
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    print(f"Retry failed after {max_retries} retries for query {item['question_index']}")
+                    return {
+                        'user_id': user_id,
+                        'question': question,
+                        'correct_answer': item['answer'],
+                        'model_answer': f"Error after {max_retries} retries: {error_msg}",
+                        'reasoning_steps': "",
+                        'question_index': item['question_index']
+                    }
+            else:
+                return {
+                    'user_id': user_id,
+                    'question': question,
+                    'correct_answer': item['answer'],
+                    'model_answer': f"Error: {e}",
+                    'reasoning_steps': "",
+                    'question_index': item['question_index']
+                }
+
+
 def run_worker_process(user_data):
     """
     Function executed by each parallel worker process.
@@ -154,63 +249,7 @@ def run_worker_process(user_data):
         question = item['question']
         full_question = "Please provide only the direct answer to the following question, without any additional explanation, conversation, or introductory text. Format the answer as a number if it is quantitative. If the answer is zero, return '0' or '0.0'. If the question is about an activity for which there is no data, assume the activity was performed zero times" + QUESTION_PREFIX + question
 
-        try:
-            final_answer, final_state = ot.run(
-                agent(inputs=full_question, return_final_state=True)
-            )
-            results.append({
-                'user_id': user_id,
-                'question': question,
-                'correct_answer': item['answer'],
-                'model_answer': final_answer,
-                'reasoning_steps': str(final_state),
-                'question_index': item['question_index']
-            })
-        except Exception as e:
-            error_msg = str(e)
-            if "429" in error_msg or "quota exceeded" in error_msg.lower():
-                # Extract retry_delay
-                match = re.search(r"retry in (\d+\.?\d*)s", error_msg)
-                if match:
-                    retry_delay = float(match.group(1))
-                else:
-                    match = re.search(r"retry_delay \{ seconds: (\d+) \}", error_msg)
-                    if match:
-                        retry_delay = float(match.group(1))
-                    else:
-                        retry_delay = 15.0
-                time.sleep(retry_delay + 3)
-                # Retry
-                try:
-                    final_answer, final_state = ot.run(
-                        agent(inputs=full_question, return_final_state=True)
-                    )
-                    results.append({
-                        'user_id': user_id,
-                        'question': question,
-                        'correct_answer': item['answer'],
-                        'model_answer': final_answer,
-                        'reasoning_steps': str(final_state),
-                        'question_index': item['question_index']
-                    })
-                except Exception as e2:
-                    results.append({
-                        'user_id': user_id,
-                        'question': question,
-                        'correct_answer': item['answer'],
-                        'model_answer': f"Error: {e2}",
-                        'reasoning_steps': "",
-                        'question_index': item['question_index']
-                    })
-            else:
-                results.append({
-                    'user_id': user_id,
-                    'question': question,
-                    'correct_answer': item['answer'],
-                    'model_answer': f"Error: {e}",
-                    'reasoning_steps': "",
-                    'question_index': item['question_index']
-                })
+        results.append(run_with_retry(agent, full_question, item, user_id))
 
         # Periodic saving every 10 questions
         if (i + 1) % 10 == 0:
