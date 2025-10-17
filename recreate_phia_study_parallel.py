@@ -211,6 +211,27 @@ def run_worker_process(user_data):
     openai_model_name = os.getenv("OPENAI_MODEL_NAME")
     openai_api_base = os.getenv("OPENAI_BASE_URL")
 
+    # Modify __post_init__ to use base_url
+    original_post_init = openai_api.OpenAIAPI.__post_init__
+
+    def patched_post_init(self):
+        # Create cache first (from original __post_init__)
+        self._cache_handler = openai_api.caching.SimpleFunctionCache(
+            cache_filename=self.cache_filename,
+        )
+
+        # Create client with base_url if provided
+        base_url = getattr(self, '_base_url', None)
+        if base_url:
+            self._client = openai_api.openai.OpenAI(api_key=self.api_key, base_url=base_url)
+        elif self.api_key:
+            self._client = openai_api.openai.OpenAI(api_key=self.api_key)
+        else:
+            self._client = openai_api.openai.OpenAI()
+
+    # Replace __post_init__
+    openai_api.OpenAIAPI.__post_init__ = patched_post_init
+
     if api_choice == 'gemini':
         genai.configure(api_key=google_api_key)
         model_name = gemini_model_name
@@ -226,6 +247,8 @@ def run_worker_process(user_data):
             api_key=openai_api_key,
             temperature=0.0,
         )
+        # Set base_url after instantiation
+        llm_engine._base_url = openai_api_base
     else:
         raise ValueError(f"Unsupported API_CHOICE: {api_choice}")
 
