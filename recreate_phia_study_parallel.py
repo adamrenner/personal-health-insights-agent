@@ -207,7 +207,7 @@ def run_worker_process(user_data):
     genai.configure(api_key=google_api_key)
 
     # Model to use
-    model_name = "models/gemini-2.5-flash-lite"
+    model_name = "models/gemma-3-27b-it"
 
     # Load exemplars
     exemplar_dir = "few_shots"
@@ -384,6 +384,32 @@ def generate_output(results_df):
     # Count errors
     error_count = sum(1 for result in results_df['calculated_result'] if str(result).startswith('Error:'))
     print(f"Errors encountered: {error_count}")
+
+    # Evaluate accuracy
+    correct_count = 0
+    valid_count = 0
+    for _, row in results_df.iterrows():
+        correct_answer = str(row['correct_answer']).strip()
+        model_answer = str(row['calculated_result']).strip()
+        if model_answer.startswith('Error:'):
+            continue  # Skip errors
+        valid_count += 1
+        try:
+            # Try to parse as number
+            correct_num = float(correct_answer)
+            model_num = float(model_answer)
+            if abs(correct_num - model_num) <= 0.1:
+                correct_count += 1
+        except ValueError:
+            # Treat as text
+            if correct_answer.lower() in model_answer.lower():
+                correct_count += 1
+
+    if valid_count > 0:
+        percent_correct = (correct_count / valid_count) * 100
+        print(f"Accuracy: {correct_count}/{valid_count} ({percent_correct:.2f}%)")
+    else:
+        print("No valid answers to evaluate.")
 
 
 def main():
