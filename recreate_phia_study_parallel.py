@@ -22,6 +22,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from onetwo import ot
 from onetwo.backends import gemini_api
+from onetwo.backends import openai_api
 import data_utils
 import colab_utils
 import prompt_templates
@@ -204,10 +205,31 @@ def run_worker_process(user_data):
     # Set API Keys
     google_api_key = os.getenv("GOOGLE_API_KEY")
     tavily_api_key = os.getenv("TAVILY_API_KEY")
-    genai.configure(api_key=google_api_key)
+    api_choice = os.getenv("API_CHOICE")
+    gemini_model_name = os.getenv("GEMINI_MODEL_NAME")
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    openai_model_name = os.getenv("OPENAI_MODEL_NAME")
+    openai_api_base = os.getenv("OPENAI_BASE_URL")
 
-    # Model to use
-    model_name = "models/gemma-3-27b-it"
+    if api_choice == 'gemini':
+        genai.configure(api_key=google_api_key)
+        model_name = gemini_model_name
+        llm_engine = gemini_api.GeminiAPI(
+            generate_model_name=model_name,
+            api_key=google_api_key,
+            temperature=0.0,
+        )
+    elif api_choice == 'openai':
+        model_name = openai_model_name
+        llm_engine = openai_api.OpenAIAPI(
+            model_name=model_name,
+            api_key=openai_api_key,
+            temperature=0.0,
+        )
+    else:
+        raise ValueError(f"Unsupported API_CHOICE: {api_choice}")
+
+    llm_engine.register()
 
     # Load exemplars
     exemplar_dir = "few_shots"
@@ -223,14 +245,6 @@ def run_worker_process(user_data):
         enforce_schema=True,
         temporally_localize="today"
     )
-
-    # Setup LLM Backend
-    llm_engine = gemini_api.GeminiAPI(
-        generate_model_name=model_name,
-        api_key=google_api_key,
-        temperature=0.0,
-    )
-    llm_engine.register()
 
     # Create Agent
     agent = get_react_agent(
