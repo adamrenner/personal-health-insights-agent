@@ -284,7 +284,15 @@ def run_worker_process(user_data):
     # Process each question for this user
     for i, item in enumerate(questions):
         question = item['question']
-        full_question = "Please provide only the direct answer to the following question, without any additional explanation, conversation, or introductory text. Format the answer as a number if it is quantitative. If the answer is zero, return '0' or '0.0'. If the question is about an activity for which there is no data, assume the activity was performed zero times" + QUESTION_PREFIX + question
+        full_question = (
+            "Please provide only the direct answer to the following question. It is critically important to be concise and obey the following rules for your final answer or your response will be considered invalid:"
+            "1. Minimize your final response to numbers, dates, or just one to three words and do not provide additional explanation, conversation, or introductory text. "
+            "2. Never format your answer with markdown"
+            "3. Provide just a number if the answer is quantitative. "
+            "4. If the answer is zero, return '0' or '0.0'. "
+            "5. If the question is about an activity for which there is no data, assume the activity was performed zero times and answer 'NA', '0', or '0.0'. "
+            "6. Final answers must be extremely brief, preferably no longer than two words. "
+        ) + QUESTION_PREFIX + question
 
         results.append(run_with_retry(agent, full_question, item, user_id))
 
