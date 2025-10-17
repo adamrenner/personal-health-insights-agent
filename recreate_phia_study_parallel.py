@@ -56,33 +56,33 @@ def load_and_prepare_data(user_ids, question_range):
     Returns:
         dict: Dictionary mapping user_id to list of question dictionaries
     """
-    # Mapping of user IDs to CSV filenames
-    user_files = {
-        465: "health_behavior_final_v2.csv",
-        171: "inactive_insomniacs_final_v2.csv",
-        333: "sedentary_sleeper_final_v2.csv",
-        41: "active_achiver_final_v2.csv"
-    }
+    # Read the Excel file
+    df = pd.read_excel('Objective Query - PHIA.xlsx', sheet_name='Sheet1')
+
+    # Split into 4 chunks of 1000 rows each
+    chunks = [df.iloc[i*1000:(i+1)*1000] for i in range(4)]
+
+    # Assign chunks to user_ids in order
+    user_chunks = dict(zip(user_ids, chunks))
 
     # Parse question range
     start, end = map(int, question_range.split('-'))
 
     user_questions = {}
     for user_id in user_ids:
-        if user_id not in user_files:
+        if user_id not in user_chunks:
             raise ValueError(f"Unknown user ID: {user_id}")
 
-        file_path = f"data/auto_eval/{user_files[user_id]}"
-        df = pd.read_csv(file_path)
+        chunk_df = user_chunks[user_id]
 
         # Select rows for the question range (1-based to 0-based indexing)
-        selected_df = df.iloc[start-1:end]
+        selected_df = chunk_df.iloc[start-1:end]
 
         questions = []
         for idx, row in enumerate(selected_df.iterrows()):
             questions.append({
-                'question': row[1]['question'],
-                'answer': row[1]['label'],
+                'question': row[1]['Question'],
+                'answer': row[1]['Answer'],
                 'question_index': start + idx
             })
 
