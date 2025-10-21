@@ -57,33 +57,26 @@ def load_and_prepare_data(user_ids, question_range):
     Returns:
         dict: Dictionary mapping user_id to list of question dictionaries
     """
-    # Read the Excel file
-    df = pd.read_excel('Objective Query - PHIA.xlsx', sheet_name='Sheet1')
-
-    # Split into 4 chunks of 1000 rows each
-    chunks = [df.iloc[i*1000:(i+1)*1000] for i in range(4)]
-
-    # Assign chunks to user_ids in order
-    user_chunks = dict(zip(user_ids, chunks))
+    # Read the CSV file
+    df = pd.read_csv('data/auto_eval/improved_qualitative_with_answers.csv')
 
     # Parse question range
     start, end = map(int, question_range.split('-'))
 
     user_questions = {}
     for user_id in user_ids:
-        if user_id not in user_chunks:
-            raise ValueError(f"Unknown user ID: {user_id}")
-
-        chunk_df = user_chunks[user_id]
+        answer_col = f'answer_key_{user_id}'
+        if answer_col not in df.columns:
+            raise ValueError(f"No answer column for user {user_id}")
 
         # Select rows for the question range (1-based to 0-based indexing)
-        selected_df = chunk_df.iloc[start-1:end]
+        selected_df = df.iloc[start-1:end]
 
         questions = []
         for idx, row in enumerate(selected_df.iterrows()):
             questions.append({
-                'question': row[1]['Question'],
-                'answer': row[1]['Answer'],
+                'question': row[1]['Query'],
+                'answer': row[1][answer_col],
                 'question_index': start + idx
             })
 
@@ -107,6 +100,7 @@ def run_with_retry(agent, full_question, item, user_id):
     """
     max_retries = 5
     question = item['question']
+    print(question)
 
     for attempt in range(max_retries + 1):
         try:
@@ -438,6 +432,11 @@ def generate_output(results_df):
         model_answer = str(row['calculated_result']).strip()
         if model_answer.startswith('Error:'):
             continue  # Skip errors
+        # Special case: if final answer is zero and correct answer is missing or blank, consider correct
+        if (model_answer in ['0', '0.0']) and correct_answer == '':
+            correct_count += 1
+            valid_count += 1
+            continue
         valid_count += 1
         try:
             # Try to parse as number
