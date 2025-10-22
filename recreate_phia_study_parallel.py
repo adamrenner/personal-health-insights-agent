@@ -20,16 +20,18 @@ import re
 import multiprocessing
 import google.generativeai as genai
 from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 from onetwo import ot
 from onetwo.backends import gemini_api
 from onetwo.backends import openai_api
 import data_utils
 import colab_utils
 import prompt_templates
+import post_processor
 import phia_agent
-
-# Load environment variables
-load_dotenv()
 
 # Add current directory to sys.path
 current_dir = os.getcwd()
@@ -42,6 +44,7 @@ importlib.reload(colab_utils)
 importlib.reload(prompt_templates)
 importlib.reload(phia_agent)
 
+from post_processor import process_answer
 from data_utils import load_persona
 from phia_agent import get_react_agent, QUESTION_PREFIX
 
@@ -100,10 +103,25 @@ def run_with_retry(agent, full_question, item, user_id):
     """
     max_retries = 5
     question = item['question']
-    print(question)
+
 
     for attempt in range(max_retries + 1):
         try:
+            if attempt > 0:
+                retry_prefix = f"(Retry attempt {attempt + 1} due to previous code error) "
+            else:
+                retry_prefix = ""
+            full_question = retry_prefix + (
+                f"Please provide only the direct answer to the following question. It is critically important to be concise and obey the following rules for your final answer or your response will be considered invalid:"
+                f"1. Minimize your final response to numbers, dates, or just one to three words and do not provide additional explanation, conversation, or introductory text. "
+                f"2. Never format your answer with markdown"
+                f"3. Provide just a number if the answer is quantitative. "
+                f"4. If the answer is zero, return '0' or '0.0'. "
+                f"5. If the question is about an activity for which there is no data, assume the activity was performed zero times and answer 'NA', '0', or '0.0'. "
+                f"6. Final answers must be extremely brief, preferably no longer than two words. "
+            ) + QUESTION_PREFIX + question
+            print(question)
+            print(f"Attempt {attempt + 1}: Running agent for question {item['question_index']}")
             final_answer, final_state = ot.run(
                 agent(inputs=full_question, return_final_state=True)
             )
@@ -133,12 +151,31 @@ def run_with_retry(agent, full_question, item, user_id):
             else:
                 if attempt > 0:
                     print(f"Retry succeeded for query {item['question_index']}")
+                try:
+                    cleaned_answer = process_answer(question, final_answer)
+                    if cleaned_answer == "RETRY_AGENT":
+                        if attempt < max_retries:
+                            print(f"Code error detected in agent answer, retrying agent for query {item['question_index']}")
+                            continue  # Retry the agent query
+                        else:
+                            print(f"Agent retry failed after {max_retries} retries due to code errors for query {item['question_index']}")
+                            return {
+                                'user_id': user_id,
+                                'question': question,
+                                'correct_answer': item['answer'],
+                                'model_answer': f"Error: Agent retry failed after {max_retries} retries due to code errors",
+                                'reasoning_steps': "",
+                                'question_index': item['question_index']
+                            }
+                except Exception as e:
+                    print(f"Post-processing failed: {e}, using original answer")
+                    cleaned_answer = final_answer
                 return {
                     'user_id': user_id,
                     'question': question,
                     'correct_answer': item['answer'],
-                    'model_answer': final_answer,
-                    'reasoning_steps': str(final_state),
+                    'model_answer': cleaned_answer,
+                    'reasoning_steps': final_answer,
                     'question_index': item['question_index']
                 }
         except Exception as e:
@@ -179,6 +216,16 @@ def run_with_retry(agent, full_question, item, user_id):
                     'reasoning_steps': "",
                     'question_index': item['question_index']
                 }
+
+    # If we exit the loop without returning, it means max retries exceeded for RETRY_AGENT
+    return {
+        'user_id': user_id,
+        'question': question,
+        'correct_answer': item['answer'],
+        'model_answer': f"Error: Agent retry failed after {max_retries} retries due to code errors",
+        'reasoning_steps': "",
+        'question_index': item['question_index']
+    }
 
 
 def run_worker_process(user_data):
@@ -279,13 +326,13 @@ def run_worker_process(user_data):
     for i, item in enumerate(questions):
         question = item['question']
         full_question = (
-            "Please provide only the direct answer to the following question. It is critically important to be concise and obey the following rules for your final answer or your response will be considered invalid:"
-            "1. Minimize your final response to numbers, dates, or just one to three words and do not provide additional explanation, conversation, or introductory text. "
-            "2. Never format your answer with markdown"
-            "3. Provide just a number if the answer is quantitative. "
-            "4. If the answer is zero, return '0' or '0.0'. "
-            "5. If the question is about an activity for which there is no data, assume the activity was performed zero times and answer 'NA', '0', or '0.0'. "
-            "6. Final answers must be extremely brief, preferably no longer than two words. "
+            f"Please provide only the direct answer to the following question. It is critically important to be concise and obey the following rules for your final answer or your response will be considered invalid:"
+            f"1. Minimize your final response to numbers, dates, or just one to three words and do not provide additional explanation, conversation, or introductory text. "
+            f"2. Never format your answer with markdown"
+            f"3. Provide just a number if the answer is quantitative. "
+            f"4. If the answer is zero, return '0' or '0.0'. "
+            f"5. If the question is about an activity for which there is no data, assume the activity was performed zero times and answer 'NA', '0', or '0.0'. "
+            f"6. Final answers must be extremely brief, preferably no longer than two words. "
         ) + QUESTION_PREFIX + question
 
         results.append(run_with_retry(agent, full_question, item, user_id))
@@ -479,7 +526,7 @@ def main():
     parser.add_argument(
         '--num_workers',
         type=int,
-        default=multiprocessing.cpu_count(),
+        default=1,
         help='Number of parallel workers to use (default: number of CPU cores)'
     )
     parser.add_argument(
