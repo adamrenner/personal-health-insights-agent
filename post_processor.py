@@ -177,6 +177,11 @@ def process_answer(question: str, answer: str) -> str:
             # No function call, return raw answer as fallback
             final_response = answer
 
+        # Check if final response is too long, trigger retry
+        if len(final_response) > 30 and final_response != "RETRY_AGENT":
+            print(f"Post-processing: Final response too long ({len(final_response)} chars), triggering retry")
+            final_response = "RETRY_AGENT"
+
         print(f"Post-processing: Final response: {final_response}")
         return final_response
 

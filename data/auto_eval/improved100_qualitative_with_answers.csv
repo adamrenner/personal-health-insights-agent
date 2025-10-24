@@ -1,0 +1,101 @@
+Query,Formula,answer_key_465,answer_key_171,answer_key_333,answer_key_41
+What was the standard deviation of my nightly REM sleep duration over the last 7 days?,daily_metrics.during('last 7 days')['rem_sleep_minutes'].std(),31.91,12.17,27.28,18.65
+What was my highest resting heart rate today?,daily_metrics.during('today')['resting_heart_rate'].max(),61.46,58.56,57.22,61.08
+What was my lowest percentage of deep sleep in the last 30 days?,daily_metrics.during('last 30 days')['deep_sleep_percent'].min(),1.61,0.89,4.44,3.66
+What was my total duration for aerobic workouts that earned 5 or fewer Active Zone Minutes?,"exercise_entries.query('activityName == ""Aerobic Workout""').during(daily_metrics.query('active_zone_minutes <= 5')['datetime'])['duration'].sum()",0.00,0.00,0.00,0.00
+What was my total running distance on days when I slept for at least 2 hours?,"exercise_entries.query('activityName == ""Run""').during(daily_metrics.query('sleep_minutes >= 2*60')['datetime'])['distance'].sum()",12195.10,40115.08,13700.79,0.00
+What was my lowest step count today?,daily_metrics.during('today')['steps'].min(),8481.62,2700.75,8316.51,13684.34
+What was the standard deviation of my daily steps over the last 7 days?,daily_metrics.during('last 7 days')['steps'].std(),3198.53,2627.39,3793.22,2774.06
+What was my highest daily step count in the last 21 days?,daily_metrics.during('last 21 days')['steps'].max(),17856.52,15252.92,21776.00,19829.58
+What was my lowest step count yesterday?,daily_metrics.during('yesterday')['steps'].min(),14042.88,6680.00,11519.91,6124.66
+What was my highest daily Active Zone Minutes in the last 21 days?,daily_metrics.during('last 21 days')['active_zone_minutes'].max(),58.00,79.72,54.61,185.37
+What unique activities did I do today?,exercise_entries.during('today')['activityName'].drop_duplicates(),None,None,None,None
+What was my average nightly light sleep duration over the last 7 days?,daily_metrics.during('last 7 days')['light_sleep_minutes'].mean(),274.53,275.33,220.20,292.92
+What was my median resting heart rate over the last 21 days?,daily_metrics.during('last 21 days')['resting_heart_rate'].median(),57.99,57.86,56.90,61.73
+What was the distance of my furthest run in the last 14 days?,"exercise_entries.query('activityName == ""Run""').during('last 14 days')['distance'].max()",12.12,0.00,13.70,0.00
+What was my median time spent awake during sleep over the last 14 days?,daily_metrics.during('last 14 days')['awake_minutes'].median(),58.29,64.13,51.52,47.24
+What was my highest Active Zone Minutes count yesterday?,daily_metrics.during('yesterday')['active_zone_minutes'].max(),33.92,34.84,22.97,105.55
+What was the standard deviation of my resting heart rate over the last 7 days?,daily_metrics.during('last 7 days')['resting_heart_rate'].std(),1.42,0.97,2.03,1.67
+What were my average Active Zone Minutes for aerobic workouts with more than 88 steps?,"exercise_entries.query('activityName == ""Aerobic Workout""').during(exercise_entries.query('steps > 88')['datetime'])['activeZoneMinutes'].mean()",8.00,0.00,0.00,40.00
+What is my median heart rate variability?,daily_metrics['heart_rate_variability'].median(),39.42,43.53,33.97,19.56
+On how many days in the last week did I sleep for 329 minutes or less?,daily_metrics.query('sleep_minutes <= 329').during('last 7 days')['datetime'].drop_duplicates().count(),1.00,1.00,0.00,1.00
+What was my total running time over the last 21 days?,"exercise_entries.query('activityName == ""Run""').during('last 21 days')['duration'].sum()",15.60,0.00,14.52,0.00
+What was my average heart rate during my last treadmill workout?,"exercise_entries.during(exercise_entries.query('activityName == ""Treadmill""')['datetime'].max())['averageHeartRate'].mean()",118.00,0.00,0.00,0.00
+What was the distance of my longest run in the last 21 days?,"exercise_entries.query('activityName == ""Run""').during('last 21 days')['distance'].max()",12.20,0.00,13.70,0.00
+What was the duration of my most recent run?,"exercise_entries.query('activityName == ""Run""')['duration'][-1]",15.60,21.40,14.52,0.00
+What was my deep sleep percentage today?,daily_metrics.during('today')['deep_sleep_percent'].mean(),14.34,15.08,14.30,13.73
+What was my total treadmill duration on days when I slept for 5 hours or less?,"exercise_entries.query('activityName == ""Treadmill""').during(daily_metrics.query('sleep_minutes <= 5*60')['datetime'])['duration'].sum()",0.00,0.00,0.00,0.00
+What was my lowest percentage of awake time during sleep today?,daily_metrics.during('today')['awake_percent'].min(),17.59,12.13,14.76,11.91
+What was my longest duration of deep sleep in the past 30 days?,daily_metrics.during('last 30 days')['deep_sleep_minutes'].max(),100.88,85.14,93.54,102.03
+What is my median nightly deep sleep duration?,daily_metrics['deep_sleep_minutes'].median(),66.42,56.17,63.05,54.78
+What was the duration of my last aerobic workout?,"exercise_entries.during(exercise_entries.query('activityName == ""Aerobic Workout""')['datetime'].max())['duration'].mean()",31.57,0.00,0.00,32.52
+What was my median nightly deep sleep duration over the last 14 days?,daily_metrics.during('last 14 days')['deep_sleep_minutes'].median(),57.48,58.49,74.11,58.80
+What was my median percentage of awake time during sleep over the last 14 days?,daily_metrics.during('last 14 days')['awake_percent'].median(),12.77,15.10,10.78,10.22
+How many steps did I take today?,daily_metrics.during('today')['steps'].mean(),8481.62,2700.75,8317.00,13684.00
+How many days did I exercise in the last 30 days?,exercise_entries.during('last 30 days')['datetime'].drop_duplicates().count(),11.00,2.00,1.00,13.00
+What is the standard deviation of my nightly awake sleep percentage?,daily_metrics['awake_percent'].std(),2.80,4.28,3.72,3.94
+How many steps were in my last run?,"exercise_entries.during(exercise_entries.query('activityName == ""Run""')['datetime'].max())['steps'].mean()",1887.00,2394.00,1816.00,0.00
+What was my total duration for aerobic workouts on days when I slept for 17 hours or less?,"exercise_entries.query('activityName == ""Aerobic Workout""').during(daily_metrics.query('sleep_minutes <= 17*60')['datetime'])['duration'].sum()",31.57,0.00,0.00,175.12
+What was the longest I slept on a single night in the last 14 days?,daily_metrics.during('last 14 days')['sleep_minutes'].max(),588.24,542.43,569.78,490.52
+What was my highest percentage of light sleep in the last 14 days?,daily_metrics.during('last 14 days')['light_sleep_percent'].max(),60.91,59.02,61.60,72.04
+What was my average daily Active Zone Minutes over the last 30 days?,daily_metrics.during('last 30 days')['active_zone_minutes'].mean(),43.10,27.70,22.54,88.35
+What was my average distance on the treadmill over the last 27 days?,"exercise_entries.query('activityName == ""Treadmill""').during('last 27 days')['distance'].mean()",20991.80,0.00,0.00,0.00
+What was the duration of my most recent run?,"exercise_entries.query('activityName == ""Run""')['duration'][-1]",15.60,21.40,14.52,0.00
+What was my median REM sleep duration today?,daily_metrics.during('today')['rem_sleep_minutes'].median(),41.31,75.49,109.73,51.91
+What was my highest percentage of REM sleep in the last 30 days?,daily_metrics.during('last 30 days')['rem_sleep_percent'].max(),33.53,20.18,27.84,27.85
+What was my highest percentage of REM sleep yesterday?,daily_metrics.during('yesterday')['rem_sleep_percent'].max(),22.74,12.21,14.13,0.00
+How many times did I exercise in the last 30 days?,exercise_entries.during('last 30 days')['datetime'].count(),11.00,2.00,1.00,13.00
+Did I sleep for 555 minutes or less today?,daily_metrics.query('sleep_minutes <= 555').during('today')['datetime'].drop_duplicates().count(),Yes,Yes,Yes,Yes
+What was my total running time over the last 14 days?,"exercise_entries.query('activityName == ""Run""').during('last 14 days')['duration'].sum()",15.60,46.58,14.52,0.00
+What is my median nightly deep sleep percentage?,daily_metrics['deep_sleep_percent'].median(),13.74,12.99,13.85,12.21
+What was the average number of steps for my first five treadmill workouts?,"exercise_entries.query('activityName == ""Treadmill""')['steps'][:5].mean()",3189.00,0.00,0.00,418.00
+What was the duration of my last run?,"exercise_entries.query('activityName == ""Run""')['duration'][-1]",15.60,21.40,14.52,0.00
+On how many days did I sleep for 648 minutes or less?,daily_metrics.query('sleep_minutes <= 648')['datetime'].drop_duplicates().count(),29.00,21.00,28.00,28.00
+What was my deep sleep percentage today?,daily_metrics.during('today')['deep_sleep_percent'].mean(),14.34,15.08,14.30,13.73
+What was my total duration on the treadmill for workouts with an elevation gain of 69 or less?,"exercise_entries.query('activityName == ""Treadmill""').during(exercise_entries.query('elevationGain <= 69')['datetime'])['duration'].sum()",48.63,0.00,0.00,0.00
+What is my highest-ever recorded resting heart rate?,daily_metrics['resting_heart_rate'].max(),68.14,64.27,61.71,73.13
+What is the standard deviation of my nightly deep sleep percentage?,daily_metrics['deep_sleep_percent'].std(),5.51,5.27,4.72,5.25
+How much light sleep did I get yesterday?,daily_metrics.during('yesterday')['light_sleep_minutes'].sum(),256.87,264.47,235.40,0.00
+Did I sleep for 519 minutes or less today?,daily_metrics.query('sleep_minutes <= 519').during('today')['datetime'].drop_duplicates().count(),Yes,Yes,Yes,Yes
+What was my total running time over the last 7 days?,"exercise_entries.query('activityName == ""Run""').during('last 7 days')['duration'].sum()",15.60,0.00,14.52,0.00
+What is my total recorded REM sleep?,daily_metrics['rem_sleep_minutes'].sum(),2471.07,1175.76,2386.32,1588.36
+On how many days in the last 30 days did I sleep for more than 270 minutes?,daily_metrics.query('sleep_minutes > 270').during('last 30 days')['datetime'].drop_duplicates().count(),26.00,20.00,26.00,26.00
+What was the duration of my last run?,"exercise_entries.query('activityName == ""Run""')['duration'][-1]",15.60,21.40,14.52,0.00
+What was my median deep sleep percentage over the last 7 days?,daily_metrics.during('last 7 days')['deep_sleep_percent'].median(),12.76,13.39,14.43,13.78
+What was my highest percentage of light sleep in the last 14 days?,daily_metrics.during('last 14 days')['light_sleep_percent'].max(),60.91,59.02,61.60,72.04
+What were my total Active Zone Minutes from aerobic workouts on days when I slept for at least 8 hours?,"exercise_entries.query('activityName == ""Aerobic Workout""').during(daily_metrics.query('sleep_minutes >= 8*60')['datetime'])['activeZoneMinutes'].sum()",0.00,0.00,0.00,40.00
+What was my average heart rate during aerobic workouts on days I got less than 16 hours of REM sleep?,"exercise_entries.query('activityName == ""Aerobic Workout""').during(daily_metrics.query('rem_sleep_minutes < 16*60')['datetime'])['averageHeartRate'].mean()",100.00,0.00,0.00,119.75
+What was the standard deviation of my nightly awake sleep percentage over the last 30 days?,daily_metrics.during('last 30 days')['awake_percent'].std(),2.85,4.28,3.60,3.99
+What is the standard deviation of my nightly light sleep percentage?,daily_metrics['light_sleep_percent'].std(),7.74,7.15,8.19,8.21
+How many steps were in my last run?,"exercise_entries.during(exercise_entries.query('activityName == ""Run""')['datetime'].max())['steps'].mean()",1887.00,2394.00,1816.00,0.00
+On how many days did I use the treadmill for 96 minutes or less?,"exercise_entries.query('activityName == ""Treadmill"" and duration <= 96')['datetime'].drop_duplicates().count()",1.00,0.00,0.00,1.00
+What was my longest duration of light sleep in the past 30 days?,daily_metrics.during('last 30 days')['light_sleep_minutes'].max(),358.28,379.70,359.20,348.15
+What was my total running distance over the last 7 days?,"exercise_entries.query('activityName == ""Run""').during('last 7 days')['distance'].sum()",0.00,0.00,13700.79,0.00
+What was the total elevation gain from my first three aerobic workouts?,"exercise_entries.query('activityName == ""Aerobic Workout""')['elevationGain'][:3].sum()",396.24,0.00,0.00,2709.16
+What was my average calories burned per run over the last 29 days?,"exercise_entries.query('activityName == ""Run""').during('last 29 days')['calories'].mean()",162.00,176.00,146.00,0.00
+What was my median daily Active Zone Minutes over the last 21 days?,daily_metrics.during('last 21 days')['active_zone_minutes'].median(),38.32,17.00,25.77,102.13
+On how many days did I have a run with an elevation gain of at least 86?,"exercise_entries.query('activityName == ""Run"" and elevationGain >= 86')['datetime'].drop_duplicates().count()",2.00,2.00,1.00,0.00
+What were the total calories burned during my first two runs?,"exercise_entries.query('activityName == ""Run""')['calories'][:2].sum()",324.00,365.00,146.00,0.00
+What was my resting heart rate on the day of my most recent aerobic workout?,"daily_metrics.during(exercise_entries.query('activityName == ""Aerobic Workout""')['datetime'].max())['resting_heart_rate'].mean()",57.83,0.00,0.00,58.83
+What is the standard deviation of my heart rate variability?,daily_metrics['heart_rate_variability'].std(),15.52,11.67,9.05,5.10
+What is the standard deviation of my nightly deep sleep percentage over the last 21 days?,daily_metrics.during('last 21 days')['deep_sleep_percent'].std(),5.48,4.76,5.06,5.41
+What were the total calories burned during my last four runs in the past 21 days?,"exercise_entries.query('activityName == ""Run""').during('last 21 days')['calories'][-4:].sum()",111.00,0.00,146.00,0.00
+What was the elevation gain of my last run?,"exercise_entries.during(exercise_entries.query('activityName == ""Run""')['datetime'].max())['elevationGain'].mean()",630.67,98.87,105.93,0.00
+What was the standard deviation of my nightly sleep duration over the last 30 days?,daily_metrics.during('last 30 days')['sleep_minutes'].std(),103.79,78.28,84.63,90.68
+What was my light sleep percentage on the night before my most recent treadmill workout?,"daily_metrics.during(exercise_entries.query('activityName == ""Treadmill""')['datetime'].max())['light_sleep_percent'].mean()",0.00,0.00,0.00,40.77
+What was my total running time over the last 30 days?,"exercise_entries.query('activityName == ""Run""').during('last 30 days')['duration'].sum()",36.93,46.58,14.52,0.00
+On how many days in the last 14 days did I sleep for more than 3 hours?,daily_metrics.query('sleep_minutes > 3*60').during('last 14 days')['datetime'].drop_duplicates().count(),13.00,7.00,11.00,10.00
+What is my median daily Active Zone Minutes?,daily_metrics['active_zone_minutes'].median(),39.13,20.89,23.31,93.07
+What was the average number of steps for my first two runs in the last 21 days?,"exercise_entries.query('activityName == ""Run""').during('last 21 days')['steps'][:2].mean()",1887.00,0.00,1816.00,0.00
+What was my shortest night of sleep in the last 30 days?,daily_metrics.during('last 30 days')['sleep_minutes'].min(),133.41,161.66,181.68,99.17
+What was my average speed across my last five runs?,"exercise_entries.query('activityName == ""Run""')['speed'][-5:].mean()",390.87,865.47,943.80,0.00
+On how many days in the last 30 days did I sleep less than 18 hours?,daily_metrics.query('sleep_minutes < 18*60').during('last 30 days')['datetime'].drop_duplicates().count(),28.00,21.00,27.00,27.00
+On how many days in the last 30 days did I sleep for at least 221 minutes?,daily_metrics.query('sleep_minutes >= 221').during('last 30 days')['datetime'].drop_duplicates().count(),26.00,20.00,26.00,26.00
+How many times did I run in the last 7 days?,"exercise_entries.query('activityName == ""Run""').during('last 7 days').count()",0.00,0.00,1.00,0.00
+What was the distance of my longest run in the last 30 days?,"exercise_entries.query('activityName == ""Run""').during('last 30 days')['distance'].max()",12195.10,20455.19,13700.79,
+How many calories did I burn in aerobic workouts on days when I had 59 or fewer Active Zone Minutes?,"exercise_entries.query('activityName == ""Aerobic Workout""').during(daily_metrics.query('active_zone_minutes <= 59')['datetime'])['calories'].sum()",124.00,0.00,0.00,0.00
+What was my median time spent awake during sleep over the last 14 days?,daily_metrics.during('last 14 days')['awake_minutes'].median(),58.29,64.13,51.52,47.24
+What was the duration of my most recent run?,"exercise_entries.query('activityName == ""Run""')['duration'][-1]",15.60,21.40,14.52,0.00
+What was my total time spent awake during sleep over the last 30 days?,daily_metrics.during('last 30 days')['awake_minutes'].sum(),1581.82,1159.28,1444.00,1286.17
+What was my total distance from runs that had an average speed of less than 20 mph/kph?,"exercise_entries.query('activityName == ""Run""').during(exercise_entries.query('speed < 20')['datetime'])['distance'].sum()",0.00,0.00,0.00,0.00
+What was my average calories burned for runs that were 6 miles/km or shorter?,"exercise_entries.query('activityName == ""Run""').during(exercise_entries.query('distance <= 6')['datetime'])['calories'].mean()",213.00,0.00,0.00,0.00

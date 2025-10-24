@@ -61,7 +61,7 @@ def load_and_prepare_data(user_ids, question_range):
         dict: Dictionary mapping user_id to list of question dictionaries
     """
     # Read the CSV file
-    df = pd.read_csv('data/auto_eval/improved_qualitative_with_answers.csv')
+    df = pd.read_csv('data/auto_eval/improved100_qualitative_with_answers.csv')
 
     # Parse question range
     start, end = map(int, question_range.split('-'))
@@ -445,6 +445,22 @@ def aggregate_results(worker_file_paths, output_dir="phia_recreation_output", ap
     return combined_df
 
 
+def normalize_boolean(answer):
+    """
+    Normalize boolean-like answers to canonical forms.
+    Treats "None", "No", 0, "0", "0.0" as "no"
+    Treats "Yes", 1, "1", "1.0" as "yes"
+    Returns original string for other values.
+    """
+    answer = str(answer).strip().lower()
+    if answer in ['none', 'no', '0', '0.0', 'false']:
+        return 'no'
+    elif answer in ['yes', '1', '1.0', 'true']:
+        return 'yes'
+    else:
+        return str(answer).strip()
+
+
 def generate_output(results_df):
     """
     Generate summary statistics from the aggregated results DataFrame.
@@ -485,15 +501,24 @@ def generate_output(results_df):
             valid_count += 1
             continue
         valid_count += 1
+
+        # Normalize boolean equivalents
+        normalized_correct = normalize_boolean(correct_answer)
+        normalized_model = normalize_boolean(model_answer)
+
+        if normalized_correct == normalized_model:
+            correct_count += 1
+            continue
+
+        # Try to parse as number if not boolean equivalents
         try:
-            # Try to parse as number
-            correct_num = float(correct_answer)
-            model_num = float(model_answer)
+            correct_num = float(normalized_correct)
+            model_num = float(normalized_model)
             if abs(correct_num - model_num) <= 0.1:
                 correct_count += 1
         except ValueError:
             # Treat as text
-            if correct_answer.lower() in model_answer.lower():
+            if normalized_correct.lower() in normalized_model.lower():
                 correct_count += 1
 
     if valid_count > 0:
