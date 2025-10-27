@@ -49,6 +49,34 @@ from data_utils import load_persona
 from phia_agent import get_react_agent, QUESTION_PREFIX
 
 
+def extract_react_trace(final_state):
+    """
+    Extracts the detailed ReAct trace (THOUGHT, ACT, OBSERVATION steps) from the final_state.
+    
+    Args:
+        final_state: The final state object returned by ot.run()
+    
+    Returns:
+        str: Formatted string containing the agent's reasoning steps
+    """
+    if hasattr(final_state, 'messages') and final_state.messages:
+        trace = []
+        for i, msg in enumerate(final_state.messages):
+            if hasattr(msg, 'role') and hasattr(msg, 'content'):
+                role = msg.role
+                content = msg.content
+                if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                    content += f"\nTool Calls: {msg.tool_calls}"
+                trace.append(f"Step {i+1} ({role}): {content}")
+        return '\n\n---\n\n'.join(trace)
+    elif hasattr(final_state, 'trace'):
+        # Alternative structure if trace is directly available
+        return str(final_state.trace)
+    else:
+        # Fallback to string representation
+        return str(final_state)
+
+
 def load_and_prepare_data(user_ids, question_range):
     """
     Load questions and answers for the specified user IDs and prepare them for distribution to workers.
@@ -145,7 +173,7 @@ def run_with_retry(agent, full_question, item, user_id):
                         'question': question,
                         'correct_answer': item['answer'],
                         'model_answer': f"Error: 429 in result after {max_retries} retries",
-                        'reasoning_steps': "",
+                        'reasoning_steps': str(final_state) if 'final_state' in locals() else "",
                         'question_index': item['question_index']
                     }
             else:
@@ -164,18 +192,19 @@ def run_with_retry(agent, full_question, item, user_id):
                                 'question': question,
                                 'correct_answer': item['answer'],
                                 'model_answer': f"Error: Agent retry failed after {max_retries} retries due to code errors",
-                                'reasoning_steps': "",
+                                'reasoning_steps': str(final_state) if 'final_state' in locals() else "",
                                 'question_index': item['question_index']
                             }
                 except Exception as e:
                     print(f"Post-processing failed: {e}, using original answer")
                     cleaned_answer = final_answer
+                reasoning_trace = extract_react_trace(final_state)
                 return {
                     'user_id': user_id,
                     'question': question,
                     'correct_answer': item['answer'],
                     'model_answer': cleaned_answer,
-                    'reasoning_steps': final_answer,
+                    'reasoning_steps': reasoning_trace,
                     'question_index': item['question_index']
                 }
         except Exception as e:
@@ -204,7 +233,7 @@ def run_with_retry(agent, full_question, item, user_id):
                         'question': question,
                         'correct_answer': item['answer'],
                         'model_answer': f"Error after {max_retries} retries: {error_msg}",
-                        'reasoning_steps': "",
+                        'reasoning_steps': str(final_state) if 'final_state' in locals() else "",
                         'question_index': item['question_index']
                     }
             else:
@@ -213,7 +242,7 @@ def run_with_retry(agent, full_question, item, user_id):
                     'question': question,
                     'correct_answer': item['answer'],
                     'model_answer': f"Error: {e}",
-                    'reasoning_steps': "",
+                    'reasoning_steps': str(final_state) if 'final_state' in locals() else "",
                     'question_index': item['question_index']
                 }
 
@@ -223,7 +252,7 @@ def run_with_retry(agent, full_question, item, user_id):
         'question': question,
         'correct_answer': item['answer'],
         'model_answer': f"Error: Agent retry failed after {max_retries} retries due to code errors",
-        'reasoning_steps': "",
+        'reasoning_steps': str(final_state) if 'final_state' in locals() else "",
         'question_index': item['question_index']
     }
 
