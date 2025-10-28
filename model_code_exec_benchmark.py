@@ -454,7 +454,11 @@ def save_results(results: List[Dict], model: str, user: int, format_type: str):
     if results:
         avg_accuracy = sum(r["accuracy_score"] for r in results) / len(results)
         avg_length = sum(len(r.get("full_response", "")) for r in results) / len(results)
+        total_model_time = sum(r["model_time"] for r in results)
+        total_post_time = sum(r["post_time"] for r in results)
         logger.info(f"Summary: Overall Accuracy: {avg_accuracy:.2f}, Avg Response Length: {avg_length:.0f} chars")
+        logger.info(f"Total Time Waiting on Models: {total_model_time:.2f}s")
+        logger.info(f"Total Time Waiting on Post-Processing: {total_post_time:.2f}s")
 
 def run_benchmark(user_id: int, question_indices: List[int], model_type: str, format_type: str):
     """
@@ -498,11 +502,17 @@ def run_benchmark(user_id: int, question_indices: List[int], model_type: str, fo
         base_prompt = prompt_build(user_data, question, model_type)
         prompt = base_prompt
         
+        model_times = []
+        post_times = []
         while post_attempt <= max_post_retries:
-            # API call
+            # API call with timing
+            start_model = time.time()
             full_response = api_call(prompt, model_type)
+            model_time = time.time() - start_model
+            model_times.append(model_time)
+            
             if full_response is None:
-                logger.error(f"Failed to get response for question {q_idx} on attempt {post_attempt + 1}")
+                logger.error(f"Failed to get response for question {q_idx} on attempt {post_attempt + 1} (took {model_time:.2f}s)")
                 if post_attempt == max_post_retries:
                     results.append({
                         "user": user_id,
@@ -512,26 +522,35 @@ def run_benchmark(user_id: int, question_indices: List[int], model_type: str, fo
                         "full_response": "API Error",
                         "post_processed_answer": "Error",
                         "ground_truth": ground_truth,
-                        "accuracy_score": 0
+                        "accuracy_score": 0,
+                        "model_time": sum(model_times),
+                        "post_time": 0.0
                     })
                     break
                 post_attempt += 1
                 prompt = base_prompt + f" (retry {post_attempt})"
                 continue
             
-            # Post-process
+            # Post-process with timing
+            start_post = time.time()
             processed_answer = post_process(question, full_response)
+            post_time = time.time() - start_post
+            post_times.append(post_time)
             
             if processed_answer != "RETRY_AGENT":
                 break  # Success
             
             post_attempt += 1
-            logger.warning(f"Post-process returned RETRY_AGENT for question {q_idx}, retry {post_attempt}")
+            logger.warning(f"Post-process returned RETRY_AGENT for question {q_idx}, retry {post_attempt} (took {post_time:.2f}s)")
             if post_attempt <= max_post_retries:
                 prompt = base_prompt + f" (retry {post_attempt} - please provide a clear final answer)"
         
+        total_model_time = sum(model_times)
+        total_post_time = sum(post_times)
+        
         if processed_answer is None or processed_answer == "Error":
             processed_answer = "Processing Error"
+            total_post_time = 0.0
         
         # Evaluate
         eval_result = evaluate_accuracy(processed_answer, ground_truth)
@@ -544,10 +563,12 @@ def run_benchmark(user_id: int, question_indices: List[int], model_type: str, fo
             "full_response": full_response,
             "post_processed_answer": processed_answer,
             "ground_truth": ground_truth,
-            **eval_result
+            **eval_result,
+            "model_time": total_model_time,
+            "post_time": total_post_time
         }
         results.append(result)
-        logger.info(f"Question {q_idx} completed. Accuracy: {eval_result['accuracy_score']}")
+        logger.info(f"Question {q_idx} completed. Accuracy: {eval_result['accuracy_score']}, Model time: {total_model_time:.2f}s, Post time: {total_post_time:.2f}s")
     
     # Save results
     save_results(results, model_type, user_id, format_type)
@@ -574,7 +595,8 @@ def main():
 
 if __name__ == "__main__":
     # Self-test: Run with small range
-    logger.info("Running self-test: user 465, questions 1-2, grok, markdown")
-    test_indices = [1, 2]
-    run_benchmark(465, test_indices, "grok", "markdown")
-    logger.info("Self-test completed. Use CLI args for full runs.")
+    # logger.info("Running self-test: user 465, questions 1-2, grok, markdown")
+    # test_indices = [1, 2]
+    # run_benchmark(465, test_indices, "grok", "markdown")
+    # logger.info("Self-test completed. Use CLI args for full runs.")
+    main()

@@ -125,7 +125,7 @@ def process_answer(question: str, answer: str) -> str:
     Returns:
         str: The cleaned and standardized answer, or "RETRY_AGENT" if a code error is detected.
     """
-    print(f"Post-processing: Agent's original answer: {answer}")
+    # print(f"Post-processing: Agent's original answer: {answer}")
 
     prompt = f"""
     You are a post-processing assistant for the PHIA agent. Your task is to clean and standardize the agent's output based on the original question.
