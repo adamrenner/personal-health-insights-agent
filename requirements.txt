@@ -29,3 +29,4 @@ html5lib
 portpicker
 pytest
 uvicorn
+xai-sdk
