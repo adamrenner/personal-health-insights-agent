@@ -570,28 +570,34 @@ def run_benchmark(user_id: int, question_indices: List[int], model_type: str, fo
         results.append(result)
         logger.info(f"Question {q_idx} completed. Accuracy: {eval_result['accuracy_score']}, Model time: {total_model_time:.2f}s, Post time: {total_post_time:.2f}s")
     
-    # Save results
-    save_results(results, model_type, user_id, format_type)
+    return results
 
 def main():
     parser = argparse.ArgumentParser(description="Benchmark LLM code execution on PHIA QA tasks")
-    parser.add_argument("--user", type=int, required=True, choices=[465, 333, 171, 41],
-                        help="User ID to select data for")
+    parser.add_argument("--users", type=str, required=True,
+                        help="Comma-separated user IDs, e.g., '465,333,171,41' or single '465'")
     parser.add_argument("--question-range", type=str, required=True,
                         help="Question range, e.g., '1-10' or '5,10-15,20'")
     parser.add_argument("--format", type=str, default="markdown", choices=["markdown", "csv", "json"],
                         help="Data formatting")
     parser.add_argument("--model", type=str, default="openai", choices=["openai", "gemini", "grok"],
                         help="LLM provider")
-    
     args = parser.parse_args()
     
-    try:
-        indices = parse_question_range(args.question_range)
-        run_benchmark(args.user, indices, args.model, args.format)
-    except Exception as e:
-        logger.error(f"Benchmark failed: {e}")
-        raise
+    user_list = [int(u.strip()) for u in args.users.split(',') if u.strip()]
+    if not user_list:
+        raise ValueError("No valid users provided")
+    
+    indices = parse_question_range(args.question_range)
+    all_results = []
+    for user in user_list:
+        logger.info(f"Running benchmark for user {user}")
+        user_results = run_benchmark(user, indices, args.model, args.format)
+        all_results.extend(user_results)
+    
+    # Save combined results
+    user_str = '_'.join(map(str, sorted(user_list)))
+    save_results(all_results, args.model, user_str, args.format)
 
 if __name__ == "__main__":
     # Self-test: Run with small range
