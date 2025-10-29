@@ -30,3 +30,4 @@ portpicker
 pytest
 uvicorn
 xai-sdk
+google-genai

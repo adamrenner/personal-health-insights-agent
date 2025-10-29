@@ -35,7 +35,7 @@ except ImportError:
     logger.warning("OpenAI client not available. Install with 'pip install openai'.")
 
 try:
-    import google.generativeai as genai
+    from google import genai
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
@@ -242,19 +242,23 @@ def api_call_gemini(prompt: str, max_retries: int = 3) -> Optional[str]:
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not set in .env")
     
-    genai.configure(api_key=api_key)
-    model_obj = genai.GenerativeModel(model)
+    # genai.configure(api_key=api_key)
+    # model_obj = genai.GenerativeModel(model)
+    client = genai.Client(api_key=api_key)
     
     # Enable code execution tool
     from google.genai import types
-    tools = [types.Tool(code_execution=types.ToolCodeExecution)]
+    # tools = [types.Tool(code_execution=types.ToolCodeExecution)]
     
     for attempt in range(max_retries):
         try:
-            response = model_obj.generate_content(
-                prompt,
-                tools=tools,
-                generation_config=types.GenerationConfig(temperature=0.0)
+            response = client.models.generate_content(
+                model=model,
+                contents = prompt,
+                config=types.GenerateContentConfig(
+                    temperature = 0.0,
+                    tools=[types.Tool(code_execution=types.ToolCodeExecution)]
+                ),
             )
             full_response = ""
             for part in response.candidates[0].content.parts:
