@@ -139,6 +139,11 @@ def prompt_build(user_data: str, question: str, model_type: str) -> str:
 Analyze the provided data using Python code execution to derive insights and answer the question step-by-step. 
 Use code to manipulate data, compute statistics, or visualize patterns as needed. 
 Output your reasoning, any code used, execution results, and final answer clearly.
+
+When handling queries about time periods like "over the past X days" (e.g., "over the past 14 days what is the average hours of sleep?"), always include the current day (today) as part of the count. The period is inclusive: it starts from today and goes back X-1 days prior. For example:
+- Assume that today's date and time is 2023-10-31 at 10:00:00 PM for any time-based calculations.
+- Always verify the date range explicitly in your reasoning before computing averages, sums, or patterns.
+
 """
     
     if model_type == "openai":
